@@ -1,0 +1,97 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+.ENV/
+
+# Pipenv
+Pipfile
+Pipfile.lock
+
+# Poetry
+poetry.lock
+.pdm.toml
+__pypackages__/
+
+# Pyre type checker
+.pyre/
+
+# mypy type checker
+.mypy_cache/
+
+# pyright type checker
+.pyright/
+
+# pytest
+.cache/
+.tox/
+coverage/
+.coverage
+.hypothesis/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# VS Code files
+.vscode/
+.vscode/settings.json
+
+# PyCharm
+.idea/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs and other system-generated files
+*.log
+*.pid
+*.gz
+*.zip
+*.tar
+*.rar
+*.bak
+
+# Local SQLite database files
+*.sqlite3
+
+# HTML coverage reports
+htmlcov/
+
+# Editor backups
+*.swp
+*~

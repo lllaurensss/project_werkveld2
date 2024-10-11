@@ -1,0 +1,9 @@
+enviro_sense:
+  sensor_app: true
+  control_app: true
+
+  broker_address: "test.mosquitto.org"
+  broker_port: 1883
+
+  sensor_driver: "mock"
+
