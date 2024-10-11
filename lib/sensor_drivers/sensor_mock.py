@@ -12,7 +12,7 @@ class Bme280Mock(SensorInterface):
         # Random temperature between -10.0 and 40.0 °C
         return round(random.uniform(-10.0, 40.0), 2)
 
-    def get_pressure(self, full_file_name: str) -> float:
+    def get_pressure(self) -> float:
         # Random atmospheric pressure between 950 and 1050 hPa
         return round(random.uniform(950, 1050), 2)
 

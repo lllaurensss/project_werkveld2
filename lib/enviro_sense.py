@@ -15,6 +15,7 @@ class EnviroSense:
     def __init__(self, logger: Logger, config: dict):
         self._logger = logger
         self._digital_id = DigitalId.create_digital_id()
+        self._mqtt_topic = MqttTopic(self._digital_id)
         self._config = config
 
         self._control_app_logic = False
@@ -25,6 +26,7 @@ class EnviroSense:
         self._sensor: Optional[SensorInterface] = None
 
         self._initialize()
+        self._running = True
 
     @property
     def digital_id(self):
@@ -63,16 +65,25 @@ class EnviroSense:
                                  humidity=humidity)
 
         payload = sensor_data.to_json()
-        topic = MqttTopic.sensor_data_topic
-        topic.value.format(digital_id=self.digital_id)
+        topic = self._mqtt_topic.sensor_data_topic
 
         self._mqtt_manager.publish(topic, payload)
 
     def _control_application(self):
         pass
 
-    def run(self):
+    def _shutdown(self):
+        self._mqtt_manager.disconnect()
 
-        while True:
-            self._sensor_application()
-            self._control_app_logic()
+        self._mqtt_manager = None
+        self._sensor = None
+
+    def run(self):
+        try:
+            while self._running:
+                self._sensor_application()
+                self._control_application()
+        except KeyboardInterrupt:
+            self._logger.info("Shutting down gracefully...")
+        finally:
+            self.shutdown()
