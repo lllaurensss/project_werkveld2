@@ -51,28 +51,3 @@ class MQTTManager:
         """Publish a message to a specific topic."""
         self._client.publish(topic, payload, qos=qos, retain=retain)
         self._logger.info(f"Published message '{payload}' to topic '{topic}' with QoS {qos}")
-
-
-# Example usage
-if __name__ == "__main__":
-    import logging
-
-    # Set up basic logging
-    logging.basicConfig(level=logging.INFO)
-    logger = logging.getLogger("MQTTManager")
-
-    mqtt_manager = MQTTManager(broker_address="test.mosquitto.org", port=1883, logger=logger)
-
-    # Connect to broker
-    mqtt_manager.connect()
-
-    # Subscribe to a topic
-    mqtt_manager.subscribe("test/topic")
-
-    # Publish a message
-    mqtt_manager.publish("test/topic", "Hello MQTT")
-
-    # Run for a bit to receive messages, then disconnect
-    import time
-    time.sleep(5)
-    mqtt_manager.disconnect()

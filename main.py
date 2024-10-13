@@ -1,10 +1,10 @@
 import logging
 import yaml
 
-from lib.enviro_sense import EnviroSense
+from lib.envirosense_app.enviro_sense import EnviroSense
 
 if __name__ == "__main__":
-    logger = logging.getLogger("my_logger")
+    logger = logging.getLogger("EnviroSense")
     logger.setLevel(logging.DEBUG)
 
     console_handler = logging.StreamHandler()

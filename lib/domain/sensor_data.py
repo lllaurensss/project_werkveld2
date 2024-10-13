@@ -1,10 +1,12 @@
 import json
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
+from uuid import UUID
 
 
 @dataclass
 class SensorData:
+    id: UUID
     temperature: float = field(default=0.0)
     humidity: float = field(default=0.0)
     pressure: float = field(default=1013.25)  # Standard sea-level atmospheric pressure in hPa
