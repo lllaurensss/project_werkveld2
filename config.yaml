@@ -1,12 +1,21 @@
 enviro_sense:
   sensor_app: true
-  control_app: false
+  control_app: true
 
   sensor_driver: "mock"
   relay_driver: "mock"
 
-  broker_address: "test.mosquitto.org"
+  broker_address: "localhost"
   broker_port: 1883
+
+  desired_temp: 20
+  kp: 1.0
+  kd: 0.05
 
   sensor_publish_data_timeout: 3
   sensor_digital_id: "LP_ENVIROSENSE_APP"
+
+  control_digital_id: "LP_ENVIROCONTROL_APP"
+  control_sensor_to_listen: "LP_ENVIROSENSE_APP"
+  control_relay_gpio: 17
+  

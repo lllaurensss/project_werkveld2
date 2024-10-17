@@ -1,14 +1,16 @@
 from logging import Logger
 import paho.mqtt.client as mqtt
+from queue import Queue
 
 
 class MQTTManager:
-    def __init__(self, broker_address="localhost", port=1883, keepalive=60, logger: Logger = None):
+    def __init__(self, broker_address="localhost", port=1883, keepalive=60, logger: Logger = None, message_list: Queue = Queue()):
         self._broker_address = broker_address
         self._port = port
         self._keepalive = keepalive
         self._client = mqtt.Client()
         self._logger = logger or Logger(__name__)
+        self._message_list = message_list
 
         # MQTT Callbacks
         self._client.on_connect = self.on_connect
@@ -24,6 +26,14 @@ class MQTTManager:
     def on_message(self, client, userdata, msg):
         """Callback when a message is received from the broker."""
         self._logger.info(f"Received message '{msg.payload.decode()}' on topic '{msg.topic}' with QoS {msg.qos}")
+
+        message = msg.payload.decode()
+
+        self._message_list.put({
+            'topic': msg.topic,
+            'payload': message,
+            'qos': msg.qos
+        })
 
     def connect(self):
         """Connect to the MQTT broker."""

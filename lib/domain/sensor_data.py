@@ -24,6 +24,23 @@ class SensorData:
     def to_json(self):
         return json.dumps(asdict(self), default=str)
 
+    @staticmethod
+    def to_sensor_data(json_str: str) -> 'SensorData':
+        try:
+            data = json.loads(json_str)
+
+            return SensorData(
+                id=UUID(data['id']),
+                temperature=data['temperature'],
+                humidity=data['humidity'],
+                pressure=data['pressure'],
+                timestamp=datetime.fromisoformat(data['timestamp'])
+            )
+            return SensorData
+
+        except Exception as e:
+            return None
+
     def __str__(self):
         return (f"SensorData(Temperature: {self.temperature}°C, "
                 f"Humidity: {self.humidity}%, Pressure: {self.pressure} hPa, "
