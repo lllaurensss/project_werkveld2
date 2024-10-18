@@ -17,5 +17,5 @@ enviro_sense:
 
   control_digital_id: "LP_ENVIROCONTROL_APP"
   control_sensor_to_listen: "LP_ENVIROSENSE_APP"
-  control_relay_gpio: 17
-  
+  control_relay_gpio_1: 17
+  control_relay_gpio_2: 27
