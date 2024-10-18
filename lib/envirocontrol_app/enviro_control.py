@@ -103,7 +103,7 @@ class EnviroControl:
                         else:
                             # heater_off()
                             self._relay_1.open_relay()
-                            self._relay_2.close_relay()
+                            self._relay_2.open_relay()
 
                         self._logger.info(f"Temperature: {current_temperature:.2f}°C, Heater Status: {'ON' if pid_output >= 0.5 else 'OFF'}")
                         time.sleep(1)
