@@ -16,7 +16,7 @@ from lib.util.logger_factory import LoggerFactory
 
 class EnviroControl:
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict) -> None:
         self._logger = LoggerFactory.create("EnviroControl")
         self._config = config
 
@@ -44,10 +44,10 @@ class EnviroControl:
         self._running = True
 
     @property
-    def digital_id(self):
+    def digital_id(self) -> str:
         return self._digital_id
 
-    def _initialize_mqtt(self):
+    def _initialize_mqtt(self) -> None:
         broker_address = self._config["enviro_sense"]["broker_address"]
         broker_port = self._config["enviro_sense"]["broker_port"]
 
@@ -60,7 +60,7 @@ class EnviroControl:
         time.sleep(2)
         self._mqtt_manager.subscribe(self._mqtt_topic.sensor_data_topic)
 
-    def _initialize_pid(self):
+    def _initialize_pid(self) -> None:
         self._pid = PID(self._kp, self._ki, self._kd, setpoint=self._desired_temp)  # Ki is set to 0 for PD control
         self._pid.output_limits = (0, 1)
 
@@ -72,11 +72,41 @@ class EnviroControl:
         else:
             raise ValueError(f"Unsupported sensor driver: {relay_driver_as_str}")
 
-    def _shutdown(self):
+    def _shutdown(self) -> None:
         self._mqtt_manager.disconnect()
         self._mqtt_manager = None
 
-    def run(self):
+    def _handle_sensor_data_message(self, data: dict) -> None:
+        sensor_data = SensorData.to_sensor_data(data["payload"])
+        if sensor_data is None:
+            return
+
+        self._logger.info(f"received this sensor data {sensor_data}")
+
+        current_temperature = sensor_data.temperature
+        pid_output = self._pid(current_temperature)
+
+        # Relay control: 1 -> heater on, 0 -> heater off
+        if pid_output >= 0.5:  # Threshold can be tuned
+            self._relay_1.close_relay()
+            self._relay_2.close_relay()
+        else:
+            # heater_off()
+            self._relay_1.open_relay()
+            self._relay_2.open_relay()
+
+        self._logger.info(f"Temperature: {current_temperature:.2f}°C, Heater Status: {'ON' if pid_output >= 0.5 else 'OFF'}")
+        time.sleep(1)
+
+    def _handle_room_control_data(self, data: dict) -> None:
+        room_control_data = RoomControlData.to_sensor_data(data["payload"])
+        if room_control_data is None:
+            return
+        self._desired_temp = room_control_data.temperature
+        self._kp = room_control_data.kp
+        self._kd = room_control_data.kd
+
+    def run(self) -> None:
         """
         Start with Kp: Begin with a low Kp and gradually increase until you see a good response without oscillations.
         Adjust Kd: Increase Kd to reduce overshoot or oscillations if they appear.
@@ -87,30 +117,10 @@ class EnviroControl:
                     data = self._sensor_data_queue.get()
 
                     if data["topic"] == self._mqtt_topic.sensor_data_topic:
-                        sensor_data = SensorData.to_sensor_data(data["payload"])
-                        if sensor_data is None:
-                            return
-
-                        self._logger.info(f"received this sensor data {sensor_data}")
-
-                        current_temperature = sensor_data.temperature
-                        pid_output = self._pid(current_temperature)
-
-                        # Relay control: 1 -> heater on, 0 -> heater off
-                        if pid_output >= 0.5:  # Threshold can be tuned
-                            self._relay_1.close_relay()
-                            self._relay_2.close_relay()
-                        else:
-                            # heater_off()
-                            self._relay_1.open_relay()
-                            self._relay_2.open_relay()
-
-                        self._logger.info(f"Temperature: {current_temperature:.2f}°C, Heater Status: {'ON' if pid_output >= 0.5 else 'OFF'}")
-                        time.sleep(1)
+                        self._handle_sensor_data_message(data)
 
                     if data["topic"] == self._mqtt_topic.set_desired_temp:
-                        room_control_data = RoomControlData(**data["payload"])
-                        self._desired_temp = room_control_data.temperature
+                        self._handle_room_control_data(data)
 
         except KeyboardInterrupt:
             self._logger.info("Shutting down gracefully...")

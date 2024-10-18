@@ -36,8 +36,6 @@ class SensorData:
                 pressure=data['pressure'],
                 timestamp=datetime.fromisoformat(data['timestamp'])
             )
-            return SensorData
-
         except Exception as e:
             return None
 
