@@ -1,16 +1,12 @@
 import json
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from uuid import UUID
 
 
 @dataclass
 class SensorData:
-    id: UUID
     temperature: float = field(default=0.0)
     humidity: float = field(default=0.0)
     pressure: float = field(default=1013.25)  # Standard sea-level atmospheric pressure in hPa
-    timestamp: datetime = field(default_factory=datetime.now)
 
     def __post_init__(self):
         # Validate ranges for realistic data
@@ -25,21 +21,16 @@ class SensorData:
         return json.dumps(asdict(self), default=str)
 
     @staticmethod
-    def to_sensor_data(json_str: str) -> 'SensorData':
+    def to_sensor_data(data: dict) -> 'SensorData':
         try:
-            data = json.loads(json_str)
-
             return SensorData(
-                id=UUID(data['id']),
                 temperature=data['temperature'],
                 humidity=data['humidity'],
-                pressure=data['pressure'],
-                timestamp=datetime.fromisoformat(data['timestamp'])
+                pressure=data['pressure']
             )
         except Exception as e:
             return None
 
     def __str__(self):
         return (f"SensorData(Temperature: {self.temperature}°C, "
-                f"Humidity: {self.humidity}%, Pressure: {self.pressure} hPa, "
-                f"Timestamp: {self.timestamp.isoformat()})")
+                f"Humidity: {self.humidity}%, Pressure: {self.pressure} hPa")

@@ -20,7 +20,6 @@ class SensorMock(SensorInterface):
         return round(random.uniform(0, 100), 2)
 
     def get_sensor_data(self) -> SensorData:
-        return SensorData(id=uuid.uuid4(),
-                          temperature=self._get_temperature(),
+        return SensorData(temperature=self._get_temperature(),
                           humidity=self._get_humidity(),
                           pressure=self._get_pressure())

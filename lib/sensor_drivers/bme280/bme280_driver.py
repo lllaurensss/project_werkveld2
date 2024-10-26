@@ -217,4 +217,4 @@ class Bme280(SensorInterface):
 
     def get_sensor_data(self) -> SensorData:
         data = self._sample()
-        return SensorData(id=uuid.uuid4(), temperature=data.temperature, pressure=data.pressure, humidity=data.humidity)
+        return SensorData(temperature=data.temperature, pressure=data.pressure, humidity=data.humidity)

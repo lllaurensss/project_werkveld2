@@ -19,19 +19,6 @@ def run_enviro_control(config):
     enviro_control.run()
 
 
-def cleanup_processes(processes):
-    for p in processes:
-        if p.is_alive():
-            p.terminate()
-            p.join()  # Wait for process to terminate
-
-
-def signal_handler(sig, frame, processes):
-    print("Signal received, terminating processes...")
-    cleanup_processes(processes)
-    sys.exit(0)
-
-
 if __name__ == "__main__":
     config = None
     with open("config.yaml", "r") as file:

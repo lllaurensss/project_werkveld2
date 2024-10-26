@@ -1,9 +1,11 @@
+import json
 import time
 
 from queue import Queue
 from typing import Optional
 from simple_pid import PID
 
+from lib.controllers.enviroment_controller import EnvironmentController
 from lib.domain.room_control_data import RoomControlData
 from lib.domain.sensor_data import SensorData
 from lib.gpio.relay_driver import RelayDriver
@@ -20,26 +22,24 @@ class EnviroControl:
         self._logger = LoggerFactory.create("EnviroControl")
         self._config = config
 
-        self._desired_temp = self._config["enviro_sense"]["desired_temp"] or 20
         self._gpio_pin_1 = self._config["enviro_sense"]["control_relay_gpio_1"] or 17
         self._gpio_pin_2 = self._config["enviro_sense"]["control_relay_gpio_2"] or 27
         self._kp = self._config["enviro_sense"]["kp"] or 1.0
         self._kd = self._config["enviro_sense"]["kd"] or 0.05
-        self._ki = 0  # we are going to use a pd controller
+
         self._digital_id = self._config["enviro_sense"]["sensor_digital_id"] or DigitalId.create_digital_id()
         self._publish_sensor_data_timeout = self._config["enviro_sense"]["sensor_publish_data_timeout"] or 3
 
         self._sensor_data_queue = Queue()  # we are going to use this as a fifo data structure (queue)
 
         self._relay_driver = self._set_relay_driver(self._config["enviro_sense"]["relay_driver"])
-        self._relay_1 = RelayFactory.create_relay(self._relay_driver, self._gpio_pin_1)
-        self._relay_2 = RelayFactory.create_relay(self._relay_driver, self._gpio_pin_2)
+        self._heating_element = RelayFactory.create_relay(self._relay_driver, self._gpio_pin_1)
+        self._steam_element = RelayFactory.create_relay(self._relay_driver, self._gpio_pin_2)
 
         self._mqtt_manager: Optional[MQTTManager] = None
         self._initialize_mqtt()
 
-        self._pid = None
-        self._initialize_pid()
+        self._heating_control = EnvironmentController()
 
         self._running = True
 
@@ -60,10 +60,6 @@ class EnviroControl:
         time.sleep(2)
         self._mqtt_manager.subscribe(self._mqtt_topic.sensor_data_topic)
 
-    def _initialize_pid(self) -> None:
-        self._pid = PID(self._kp, self._ki, self._kd, setpoint=self._desired_temp)  # Ki is set to 0 for PD control
-        self._pid.output_limits = (0, 1)
-
     def _set_relay_driver(self, relay_driver_as_str: str) -> RelayDriver:
         if relay_driver_as_str.lower() == "mock":
             return RelayDriver.MOCK
@@ -77,26 +73,27 @@ class EnviroControl:
         self._mqtt_manager = None
 
     def _handle_sensor_data_message(self, data: dict) -> None:
-        sensor_data = SensorData.to_sensor_data(data["payload"])
-        if sensor_data is None:
+        if data is None:
             return
 
-        self._logger.info(f"received this sensor data {sensor_data}")
+        self._logger.info(f"received this sensor data {data}")
 
-        current_temperature = sensor_data.temperature
-        pid_output = self._pid(current_temperature)
+        data_as_dict = json.loads(data["payload"])
+        internal_sensor_data = SensorData.to_sensor_data(data_as_dict["internal_sensor_data"])
+        external_sensor_data = SensorData.to_sensor_data(data_as_dict["external_sensor_data"])
 
-        # Relay control: 1 -> heater on, 0 -> heater off
-        if pid_output >= 0.5:  # Threshold can be tuned
-            self._relay_1.close_relay()
-            self._relay_2.close_relay()
+        # Is het buiten warmer dan binnen moet het verwarmingselement inschakelen tot de warmte binnen hoger
+        turn_heater_on = self._heating_control.calculate_abstract_device_on_off(internal_sensor_data.temperature, external_sensor_data.temperature)
+
+        if turn_heater_on:
+            self._heating_element.close_relay()
         else:
-            # heater_off()
-            self._relay_1.open_relay()
-            self._relay_2.open_relay()
+            self._heating_element.open_relay()
 
-        self._logger.info(f"Temperature: {current_temperature:.2f}°C, Heater Status: {'ON' if pid_output >= 0.5 else 'OFF'}")
-        time.sleep(1)
+        # Het vochtgehalte moet dan afgestemd worden op de heersende temperatuur en deze info zou uit een tabel gehaald moeten worden.
+        # Het programma moet dus de temperatuur en het vochtgehalte gaan vergelijken met een tabel en indien het vochtgehalte lager is,
+        # moet dit een puls geven naar de stoominstallatie om het vochtgehalte te verhogen.
+
 
     def _handle_room_control_data(self, data: dict) -> None:
         room_control_data = RoomControlData.to_sensor_data(data["payload"])

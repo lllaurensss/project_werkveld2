@@ -33,7 +33,8 @@ class EnviroSense:
 
         self._sensor_app = EnviroSenseSensorApplication(self._digital_id,
                                                         self._logger,
-                                                        self._config["enviro_sense"]["sensor_driver"],
+                                                        self._config["enviro_sense"]["internal_sensor_driver"],
+                                                        self._config["enviro_sense"]["external_sensor_driver"],
                                                         self._mqtt_manager)
 
     def _shutdown(self):
