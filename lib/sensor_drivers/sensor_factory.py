@@ -5,7 +5,7 @@ from lib.sensor_drivers.sensor_interface import SensorInterface
 class SensorFactory:
 
     @staticmethod
-    def create_driver(sensor_driver: SensorDriver) -> SensorInterface:
+    def create_driver(sensor_driver: SensorDriver, address: int) -> SensorInterface:
         if sensor_driver == SensorDriver.MOCK:
             from lib.sensor_drivers.sensor_mock import SensorMock
             return SensorMock()
@@ -16,13 +16,12 @@ class SensorFactory:
 
             port = 1
             bus = smbus2.SMBus(port)
-            return Bme280(bus)
+            return Bme280(bus, address)
 
         if sensor_driver == SensorDriver.DHT22:
             from lib.sensor_drivers.dht22.dht22_driver import Dht22
 
-            gpio = 22
-            dht22 = Dht22(gpio)
+            dht22 = Dht22(address)
             return dht22
 
         raise ValueError(f"Unsupported sensor driver: {sensor_driver}")

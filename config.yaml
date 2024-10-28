@@ -3,14 +3,21 @@ enviro_sense:
   control_app: true
 
   internal_sensor_driver: "mock"
+  internal_sensor_address: 0x76
+
   external_sensor_driver: "mock"
+  external_sensor_address: 22
+
   relay_driver: "mock"
 
   broker_address: "localhost"
   broker_port: 1883
 
-  kp: 1.0
-  kd: 0.05
+  kp_heater: 1.0
+  kd_heater: 0.5
+
+  kp_steamer: 1.0
+  kd_steamer: 0.5
 
   sensor_publish_data_timeout: 3
   sensor_digital_id: "LP_ENVIROSENSE_APP"
