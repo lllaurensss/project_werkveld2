@@ -3,7 +3,6 @@ import time
 
 from queue import Queue
 from typing import Optional
-from simple_pid import PID
 
 from lib.controllers.enviroment_controller import EnvironmentController
 from lib.domain.room_control_data import RoomControlData
@@ -12,6 +11,7 @@ from lib.gpio.relay_driver import RelayDriver
 from lib.gpio.relay_factory import RelayFactory
 from lib.mqtt.mqtt_manager import MQTTManager
 from lib.mqtt.mqtt_topic import MqttTopic
+from lib.util.csv_lookup import CSVLookup
 from lib.util.digital_id import DigitalId
 from lib.util.logger_factory import LoggerFactory
 
@@ -21,6 +21,8 @@ class EnviroControl:
     def __init__(self, config: dict) -> None:
         self._logger = LoggerFactory.create("EnviroControl")
         self._config = config
+
+        self._csv_env_table = CSVLookup("doc/waterdampspanning.csv")
 
         self._gpio_pin_1 = self._config["enviro_sense"]["control_relay_gpio_1"] or 17
         self._gpio_pin_2 = self._config["enviro_sense"]["control_relay_gpio_2"] or 27
@@ -44,7 +46,6 @@ class EnviroControl:
         self._initialize_mqtt()
 
         self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, 10)
-        self._steam_controller = EnvironmentController(self._kp_steamer, self._kd_steamer, 10)
 
         self._running = True
 
@@ -87,17 +88,26 @@ class EnviroControl:
         internal_sensor_data = SensorData.to_sensor_data(data_as_dict["internal_sensor_data"])
         external_sensor_data = SensorData.to_sensor_data(data_as_dict["external_sensor_data"])
 
+        self._handle_heater(external_sensor_data, internal_sensor_data)
+        self._handle_steamer(internal_sensor_data)
+
+    def _handle_steamer(self, internal_sensor_data: SensorData) -> None:
+        # stel u heersende temperatuur is 30° dan gaat ge in u tabel de waarde zoeken voor de temperatuur van 29° wat dat is het maximale vocht dat er mag zijn
+        # is dat onder die waarde van 29° dan moet ge de stomer gaan aanzetten
+        temp = internal_sensor_data.temperature - 1
+        target_humidity = self._csv_env_table.get_closest_value(temp)
+        if internal_sensor_data.humidity < target_humidity:
+            self._steam_element.close_relay()
+        else:
+            self._steam_element.open_relay()
+
+    def _handle_heater(self, external_sensor_data: SensorData, internal_sensor_data: SensorData) -> None:
         # Is het buiten warmer dan binnen moet het verwarmingselement inschakelen tot de warmte binnen hoger
         turn_heater_on = self._heating_control.calculate_abstract_device_on_off(internal_sensor_data.temperature, external_sensor_data.temperature)
-
         if turn_heater_on:
             self._heating_element.close_relay()
         else:
             self._heating_element.open_relay()
-
-        # Het vochtgehalte moet dan afgestemd worden op de heersende temperatuur en deze info zou uit een tabel gehaald moeten worden.
-        # Het programma moet dus de temperatuur en het vochtgehalte gaan vergelijken met een tabel en indien het vochtgehalte lager is,
-        # moet dit een puls geven naar de stoominstallatie om het vochtgehalte te verhogen.
 
     def _handle_heater_data(self, data: dict) -> None:
         room_control_data = RoomControlData.to_sensor_data(data["payload"])
@@ -107,15 +117,6 @@ class EnviroControl:
         self._kd_heater = room_control_data.kd
 
         self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, 10)
-
-    def _handle_steamer_data(self, data: dict) -> None:
-        room_control_data = RoomControlData.to_sensor_data(data["payload"])
-        if room_control_data is None:
-            return
-        self._kp_steamer = room_control_data.kp
-        self._kd_steamer = room_control_data.kd
-
-        self._steam_controller = EnvironmentController(self._kp_steamer, self._kd_heater, 10)
 
     def run(self) -> None:
         """
@@ -132,9 +133,6 @@ class EnviroControl:
 
                     if data["topic"] == self._mqtt_topic.set_heater_values:
                         self._handle_heater_data(data)
-
-                    if data["topic"] == self._mqtt_topic.set_steamer_values:
-                        self._handle_steamer_data(data)
 
         except KeyboardInterrupt:
             self._logger.info("Shutting down gracefully...")
