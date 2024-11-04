@@ -4,8 +4,9 @@ from dataclasses import dataclass, field, asdict
 
 @dataclass
 class RoomControlData:
-    kp: float = field(default=1.0)
-    kd: float = field(default=0.005)
+    kp: float = field(default=0.3)
+    kd: float = field(default=0.2)
+    threshold: float = field(default=0.5)
 
     def to_json(self):
         return json.dumps(asdict(self), default=str)
@@ -20,5 +21,5 @@ class RoomControlData:
                 kd=data['kd']
             )
 
-        except Exception as e:
+        except Exception:
             return None

@@ -43,11 +43,14 @@ class EnviroSense:
         self._mqtt_manager.disconnect()
         self._mqtt_manager = None
 
+    def stop(self):
+        self._running = False
+
     def run(self):
         try:
             while self._running:
                 self._sensor_app.publish_sensor_data()
-                time.sleep(self._publish_sensor_data_timeout) # we don't want to overrun our clients
+                time.sleep(self._publish_sensor_data_timeout)  # we don't want to overrun our clients
 
         except KeyboardInterrupt:
             self._logger.info("Shutting down gracefully...")

@@ -27,11 +27,9 @@ class EnviroControl:
         self._gpio_pin_1 = self._config["enviro_sense"]["control_relay_gpio_1"] or 17
         self._gpio_pin_2 = self._config["enviro_sense"]["control_relay_gpio_2"] or 27
 
-        self._kp_heater = self._config["enviro_sense"]["kp_heater"] or 1.0
-        self._kd_heater = self._config["enviro_sense"]["kd_heater"] or 0.05
-
-        self._kp_steamer = self._config["enviro_sense"]["kp_steamer"] or 1.0
-        self._kd_steamer = self._config["enviro_sense"]["kd_steamer"] or 0.05
+        self._kp_heater = self._config["enviro_sense"]["kp_heater"] or 0.3
+        self._kd_heater = self._config["enviro_sense"]["kd_heater"] or 0.2
+        self._threshold_heater = self._config["enviro_sense"]["threshold_heater"] or 0.5
 
         self._digital_id = self._config["enviro_sense"]["sensor_digital_id"] or DigitalId.create_digital_id()
         self._publish_sensor_data_timeout = self._config["enviro_sense"]["sensor_publish_data_timeout"] or 3
@@ -45,9 +43,10 @@ class EnviroControl:
         self._mqtt_manager: Optional[MQTTManager] = None
         self._initialize_mqtt()
 
-        self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, 10)
+        self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, self._threshold_heater)
 
         self._running = True
+        self._logger.info("envirocontrol has been init")
 
     @property
     def digital_id(self) -> str:
@@ -95,7 +94,7 @@ class EnviroControl:
         # stel u heersende temperatuur is 30° dan gaat ge in u tabel de waarde zoeken voor de temperatuur van 29° wat dat is het maximale vocht dat er mag zijn
         # is dat onder die waarde van 29° dan moet ge de stomer gaan aanzetten
         temp = internal_sensor_data.temperature - 1
-        target_humidity = self._csv_env_table.get_closest_value(temp)
+        target_humidity = self._csv_env_table.get_closest_value(temp)[1]
         if internal_sensor_data.humidity < target_humidity:
             self._steam_element.close_relay()
         else:
@@ -115,8 +114,8 @@ class EnviroControl:
             return
         self._kp_heater = room_control_data.kp
         self._kd_heater = room_control_data.kd
-
-        self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, 10)
+        self._threshold_heater = room_control_data.threshold
+        self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, self._threshold_heater)
 
     def run(self) -> None:
         """

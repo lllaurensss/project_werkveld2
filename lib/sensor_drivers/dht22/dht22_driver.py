@@ -1,4 +1,3 @@
-import uuid
 import random
 
 from lib.domain.sensor_data import SensorData

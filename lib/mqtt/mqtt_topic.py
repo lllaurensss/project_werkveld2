@@ -1,4 +1,3 @@
-from enum import Enum
 
 
 class MqttTopic:
@@ -11,7 +10,6 @@ class MqttTopic:
     @property
     def sensor_data_topic(self):
         return self._internal_sensor_data_topic
-
 
     @property
     def set_heater_values(self):

@@ -1,7 +1,6 @@
 import uuid
 from logging import Logger
 
-from lib.domain.sensor_data import SensorData
 from lib.domain.sensor_data_payload import SensorDataPayload
 from lib.mqtt.mqtt_topic import MqttTopic
 from lib.sensor_drivers.sensor_driver import SensorDriver

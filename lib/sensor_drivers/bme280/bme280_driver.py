@@ -1,5 +1,4 @@
 import time
-import uuid
 from enum import Enum
 
 from lib.domain.sensor_data import SensorData

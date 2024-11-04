@@ -28,7 +28,7 @@ class SensorData:
                 humidity=data['humidity'],
                 pressure=data['pressure']
             )
-        except Exception as e:
+        except:
             return None
 
     def __str__(self):
