@@ -31,6 +31,10 @@ class EnviroControl:
         self._kd_heater = self._config["enviro_sense"]["kd_heater"] or 0.2
         self._threshold_heater = self._config["enviro_sense"]["threshold_heater"] or 0.5
 
+        self._kp_steamer = self._config["enviro_sense"]["kp_steamer"] or 0.3
+        self._kd_steamer = self._config["enviro_sense"]["kd_steamer"] or 0.2
+        self._threshold_steamer = self._config["enviro_sense"]["threshold_steamer"] or 0.5
+
         self._digital_id = self._config["enviro_sense"]["sensor_digital_id"] or DigitalId.create_digital_id()
         self._publish_sensor_data_timeout = self._config["enviro_sense"]["sensor_publish_data_timeout"] or 3
 
@@ -44,6 +48,7 @@ class EnviroControl:
         self._initialize_mqtt()
 
         self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, self._threshold_heater)
+        self._steamer_control = EnvironmentController(self._kp_steamer, self._kd_steamer, self._threshold_steamer)
 
         self._running = True
         self._logger.info("envirocontrol has been init")
@@ -95,10 +100,14 @@ class EnviroControl:
         # is dat onder die waarde van 29° dan moet ge de stomer gaan aanzetten
         temp = internal_sensor_data.temperature - 1
         target_humidity = self._csv_env_table.get_closest_value(temp)[1]
-        if internal_sensor_data.humidity < target_humidity:
-            self._steam_element.close_relay()
+        if target_humidity is None:
+            return
+
+        turn_steamer_on = self._steamer_control.calculate_abstract_device_on_off(internal_sensor_data.humidity, target_humidity)
+        if turn_steamer_on:
+            self._heating_element.close_relay()
         else:
-            self._steam_element.open_relay()
+            self._heating_element.open_relay()
 
     def _handle_heater(self, external_sensor_data: SensorData, internal_sensor_data: SensorData) -> None:
         # Is het buiten warmer dan binnen moet het verwarmingselement inschakelen tot de warmte binnen hoger
@@ -117,6 +126,15 @@ class EnviroControl:
         self._threshold_heater = room_control_data.threshold
         self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, self._threshold_heater)
 
+    def _handle_steamer_data(self, data: dict) -> None:
+        room_control_data = RoomControlData.to_sensor_data(data["payload"])
+        if room_control_data is None:
+            return
+        self._kp_steamer = room_control_data.kp
+        self._kd_steamer = room_control_data.kd
+        self._threshold_steamer = room_control_data.threshold
+        self._steamer_control = EnvironmentController(self._kp_steamer, self._kd_steamer, self._threshold_steamer)
+
     def run(self) -> None:
         """
         Start with Kp: Begin with a low Kp and gradually increase until you see a good response without oscillations.
@@ -132,6 +150,9 @@ class EnviroControl:
 
                     if data["topic"] == self._mqtt_topic.set_heater_values:
                         self._handle_heater_data(data)
+
+                    if data["topic"] == self._mqtt_topic.set_steamer_values:
+                        self._handle_steamer_data(data)
 
         except KeyboardInterrupt:
             self._logger.info("Shutting down gracefully...")

@@ -17,6 +17,10 @@ class CSVLookup:
                 self.lookup_table[temp] = gm3
 
     def get_closest_value(self, target_temperature):
-        """Finds and returns the gm3 value for the closest temperature."""
-        closest_temp = min(self.lookup_table.keys(), key=lambda temp: abs(temp - target_temperature))
-        return self.lookup_table[closest_temp], closest_temp
+        valid_keys = [temp for temp in self.lookup_table.keys() if temp < target_temperature]
+
+        if not valid_keys:
+            return None
+
+        closest_temp = max(valid_keys)
+        return closest_temp, self.lookup_table[closest_temp]

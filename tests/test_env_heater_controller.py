@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from lib.controllers.enviroment_controller import EnvironmentController
 
 
-class TestEnvController:
+class TestEnvHeaterController:
 
     def test_can_heat_the_box(self):
         # arrange
@@ -189,4 +189,4 @@ class TestEnvController:
         plt.legend()
         plt.savefig("test_very_long_pd_controller.png")
 
-        assert is_above_target, "The internal temperature did not stay above the external temperature for 2 minutes."
+        assert is_above_target, f"The internal temperature did not stay above the external temperature for {duration} seconds."

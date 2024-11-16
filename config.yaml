@@ -14,6 +14,10 @@ enviro_sense:
   kd_heater: 0.2
   threshold_heater: 0.5
 
+  kp_steamer: 0.3
+  kd_steamer: 0.2
+  threshold_steamer: 0.5
+
   sensor_publish_data_timeout: 3
   sensor_digital_id: "LP_ENVIROSENSE_APP"
 
