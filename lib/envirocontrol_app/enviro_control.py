@@ -105,9 +105,9 @@ class EnviroControl:
 
         turn_steamer_on = self._steamer_control.calculate_abstract_device_on_off(internal_sensor_data.humidity, target_humidity)
         if turn_steamer_on:
-            self._heating_element.close_relay()
+            self._steam_element.close_relay()
         else:
-            self._heating_element.open_relay()
+            self._steam_element.open_relay()
 
     def _handle_heater(self, external_sensor_data: SensorData, internal_sensor_data: SensorData) -> None:
         # Is het buiten warmer dan binnen moet het verwarmingselement inschakelen tot de warmte binnen hoger
@@ -140,6 +140,9 @@ class EnviroControl:
         Start with Kp: Begin with a low Kp and gradually increase until you see a good response without oscillations.
         Adjust Kd: Increase Kd to reduce overshoot or oscillations if they appear.
         """
+        self._heating_element.open_relay()
+        self._steam_element.open_relay()
+
         try:
             while self._running:
                 if not self._sensor_data_queue.empty():
