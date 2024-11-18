@@ -98,7 +98,7 @@ class EnviroControl:
     def _handle_steamer(self, internal_sensor_data: SensorData) -> None:
         # stel u heersende temperatuur is 30° dan gaat ge in u tabel de waarde zoeken voor de temperatuur van 29° wat dat is het maximale vocht dat er mag zijn
         # is dat onder die waarde van 29° dan moet ge de stomer gaan aanzetten
-        target_humidity = self._csv_env_table.get_closest_value(temp)[1]
+        target_humidity = self._csv_env_table.get_closest_value(internal_sensor_data.temperature)[1]
         if target_humidity is None:
             return
 
