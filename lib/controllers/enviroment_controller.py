@@ -15,6 +15,7 @@ class EnvironmentController:
     """
 
     def __init__(self, kp, kd, threshold):
+        self._use_pid = True
         self._kp = kp  # Proportional gain
         self._kd = kd  # Derivative gain
         self._ki = 0.05
@@ -22,17 +23,29 @@ class EnvironmentController:
         self._threshold = threshold  # Output threshold to turn on the heater
         self._previous_error = 0  # Store the previous error for derivative calculation
 
-    def calculate_abstract_device_on_off(self, internal_env_value: float, external_env_value: float) -> bool:
-        """
-        Calculates whether the heater should be ON or OFF based on PD output.
+    def enable_pid(self) -> None:
+        self._use_pid = True
 
-        Args:
-            internal_env_value (float): Current internal temperature.
-            external_env_value (float): Target external temperature.
+    def disable_pid(self) -> None:
+        self._use_pid = False
 
-        Returns:
-            bool: True if the heater should be ON, False if it should be OFF.
+    def calculate_device_on_off(self, internal_env_value: float, external_env_value: float) -> bool:
+        if self._use_pid:
+            return self._calculate_device_on_off_pid(internal_env_value, external_env_value)
+        else:
+            return internal_env_value <= external_env_value  # this is on off control
+
+    def _calculate_device_on_off_pid(self, internal_env_value: float, external_env_value: float) -> bool:
         """
+                Calculates whether the heater should be ON or OFF based on PD output.
+
+                Args:
+                    internal_env_value (float): Current internal temperature.
+                    external_env_value (float): Target external temperature.
+
+                Returns:
+                    bool: True if the heater should be ON, False if it should be OFF.
+                """
         # Calculate the error (difference between target and current temperature)
         error = external_env_value - internal_env_value
         self._integral += error

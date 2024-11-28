@@ -22,7 +22,7 @@ class TestEnvSteamerController:
 
         # act
         target_humidity = csv_env_table.get_closest_value(internal_temp)[1]
-        turn_steamer_on = steamer_control.calculate_abstract_device_on_off(internal_humidity, target_humidity)
+        turn_steamer_on = steamer_control.calculate_device_on_off(internal_humidity, target_humidity)
 
         assert turn_steamer_on
 
@@ -54,7 +54,7 @@ class TestEnvSteamerController:
             external_temp_values.append(wanted_humidity)
             heater_status_values.append(steamer_on)
 
-            steamer_on = steam_control.calculate_abstract_device_on_off(internal_humidity, wanted_humidity)
+            steamer_on = steam_control.calculate_device_on_off(internal_humidity, wanted_humidity)
             if steamer_on:
                 internal_humidity += 0.486
             else:

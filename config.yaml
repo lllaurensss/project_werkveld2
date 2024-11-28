@@ -10,6 +10,8 @@ enviro_sense:
   broker_address: "localhost"
   broker_port: 1883
 
+  enable_pid: false
+
   kp_heater: 0.3
   kd_heater: 0.2
   threshold_heater: 0.5

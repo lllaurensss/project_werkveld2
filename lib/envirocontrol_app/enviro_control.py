@@ -35,6 +35,7 @@ class EnviroControl:
         self._kd_steamer = self._config["enviro_sense"]["kd_steamer"] or 0.2
         self._threshold_steamer = self._config["enviro_sense"]["threshold_steamer"] or 0.5
 
+        self._use_pid = self._config["enviro_sense"]["enable_pid"]
         self._digital_id = self._config["enviro_sense"]["sensor_digital_id"] or DigitalId.create_digital_id()
         self._publish_sensor_data_timeout = self._config["enviro_sense"]["sensor_publish_data_timeout"] or 3
 
@@ -50,8 +51,18 @@ class EnviroControl:
         self._heating_control = EnvironmentController(self._kp_heater, self._kd_heater, self._threshold_heater)
         self._steamer_control = EnvironmentController(self._kp_steamer, self._kd_steamer, self._threshold_steamer)
 
+        self._set_pid()
+
         self._running = True
         self._logger.info("envirocontrol has been init")
+
+    def _set_pid(self):
+        if self._use_pid:
+            self._heating_control.enable_pid()
+            self._steamer_control.enable_pid()
+        else:
+            self._heating_control.disable_pid()
+            self._steamer_control.disable_pid()
 
     @property
     def digital_id(self) -> str:
@@ -102,7 +113,7 @@ class EnviroControl:
         if target_humidity is None:
             return
 
-        turn_steamer_on = self._steamer_control.calculate_abstract_device_on_off(internal_sensor_data.humidity, target_humidity)
+        turn_steamer_on = self._steamer_control.calculate_device_on_off(internal_sensor_data.humidity, target_humidity)
         if turn_steamer_on:
             self._steam_element.close_relay()
         else:
@@ -110,7 +121,7 @@ class EnviroControl:
 
     def _handle_heater(self, external_sensor_data: SensorData, internal_sensor_data: SensorData) -> None:
         # Is het buiten warmer dan binnen moet het verwarmingselement inschakelen tot de warmte binnen hoger
-        turn_heater_on = self._heating_control.calculate_abstract_device_on_off(internal_sensor_data.temperature, external_sensor_data.temperature)
+        turn_heater_on = self._heating_control.calculate_device_on_off(internal_sensor_data.temperature, external_sensor_data.temperature)
         if turn_heater_on:
             self._heating_element.close_relay()
         else:

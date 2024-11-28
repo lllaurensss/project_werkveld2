@@ -16,7 +16,7 @@ class TestEnvHeaterController:
         external_temp = 20
 
         while internal_temp <= external_temp:
-            turn_heater_on = heating_control.calculate_abstract_device_on_off(internal_temp, external_temp)
+            turn_heater_on = heating_control.calculate_device_on_off(internal_temp, external_temp)
             if turn_heater_on:
                 internal_temp = internal_temp + 0.486
 
@@ -33,7 +33,7 @@ class TestEnvHeaterController:
         internal_temp = 25
         external_temp = 20
 
-        turn_heater_on = heating_control.calculate_abstract_device_on_off(internal_temp, external_temp)
+        turn_heater_on = heating_control.calculate_device_on_off(internal_temp, external_temp)
 
         # arrange
         assert turn_heater_on is False
@@ -44,7 +44,7 @@ class TestEnvHeaterController:
         kd = 0.2
         threshold = 0.5
         heating_control = EnvironmentController(kp, kd, threshold)
-
+        heating_control.disable_pid()
         internal_temp = 18  # Initial internal temperature
         external_temp = 20  # Target external temperature
 
@@ -65,7 +65,7 @@ class TestEnvHeaterController:
             external_temp_values.append(external_temp)
             heater_status_values.append(heater_on)
 
-            heater_on = heating_control.calculate_abstract_device_on_off(internal_temp, external_temp)
+            heater_on = heating_control.calculate_device_on_off(internal_temp, external_temp)
             if heater_on:
                 internal_temp += 0.486
             else:
@@ -95,7 +95,7 @@ class TestEnvHeaterController:
         kd = 0.2
         threshold = 0.5
         heating_control = EnvironmentController(kp, kd, threshold)
-
+        heating_control.disable_pid()
         internal_temp = 22  # Initial internal temperature
         external_temp = 20  # Target external temperature
 
@@ -117,7 +117,7 @@ class TestEnvHeaterController:
             external_temp_values.append(external_temp)
             heater_status_values.append(heater_on)
 
-            heater_on = heating_control.calculate_abstract_device_on_off(internal_temp, external_temp)
+            heater_on = heating_control.calculate_device_on_off(internal_temp, external_temp)
             if heater_on:
                 internal_temp += 0.486
             else:
@@ -168,7 +168,7 @@ class TestEnvHeaterController:
             external_temp_values.append(external_temp)
             heater_status_values.append(heater_on)
 
-            heater_on = heating_control.calculate_abstract_device_on_off(internal_temp, external_temp)
+            heater_on = heating_control.calculate_device_on_off(internal_temp, external_temp)
             if heater_on:
                 internal_temp += 0.486
             else:
