@@ -102,7 +102,10 @@ class EnviroControl:
         data_as_dict = json.loads(data["payload"])
         internal_sensor_data = SensorData.to_sensor_data(data_as_dict["internal_sensor_data"])
         external_sensor_data = SensorData.to_sensor_data(data_as_dict["external_sensor_data"])
-
+        self._logger.info(f"Handling the sensor data: ")
+        self._logger.info(f"Internal sensor data:\n{internal_sensor_data} ")
+        self._logger.info(f"External sensor data:\n{external_sensor_data} ")
+        self._logger.info(f"Controlling the steamer and heater relay: ")
         self._handle_heater(external_sensor_data, internal_sensor_data)
         self._handle_steamer(internal_sensor_data)
 
@@ -115,16 +118,20 @@ class EnviroControl:
 
         turn_steamer_on = self._steamer_control.calculate_device_on_off(internal_sensor_data.humidity, target_humidity)
         if turn_steamer_on:
+            self._logger.info(f"Closing the steamer relay")
             self._steam_element.close_relay()
         else:
+            self._logger.info(f"Opening the steamer relay")
             self._steam_element.open_relay()
 
     def _handle_heater(self, external_sensor_data: SensorData, internal_sensor_data: SensorData) -> None:
         # Is het buiten warmer dan binnen moet het verwarmingselement inschakelen tot de warmte binnen hoger
         turn_heater_on = self._heating_control.calculate_device_on_off(internal_sensor_data.temperature, external_sensor_data.temperature)
         if turn_heater_on:
+            self._logger.info(f"Closing the heater relay")
             self._heating_element.close_relay()
         else:
+            self._logger.info(f"Opening the heater relay")
             self._heating_element.open_relay()
 
     def _handle_heater_data(self, data: dict) -> None:
